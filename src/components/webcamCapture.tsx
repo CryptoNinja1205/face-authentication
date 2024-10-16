@@ -2,11 +2,12 @@
 import React, { useRef, useEffect } from "react";
 
 interface WebcamCaptureProps {
-  onCapture: (image: Blob) => void; // Change to accept image Blob
+  onCapture: (image: string) => void; // Change to accept an image string
 }
 
 const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null); // Create a ref for the canvas
 
   useEffect(() => {
     const startVideo = async () => {
@@ -17,32 +18,24 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture }) => {
     };
 
     startVideo();
-
-    return () => {
-      // Cleanup stream on component unmount
-      if (videoRef.current) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach((track) => track.stop());
-      }
-    };
   }, []);
 
-  const handleCapture = async () => {
-    if (videoRef.current) {
-      const canvas = document.createElement("canvas");
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      const context = canvas.getContext("2d");
-
+  const handleCapture = () => {
+    if (videoRef.current && canvasRef.current) {
+      const context = canvasRef.current.getContext("2d");
       if (context) {
-        context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        const imageBlob = await new Promise<Blob | null>((resolve) =>
-          canvas.toBlob(resolve, "image/jpeg")
-        );
-        console.log("=========>", imageBlob);
-        if (imageBlob) {
-          onCapture(imageBlob); // Pass the image blob to the parent component
-        }
+        // Set canvas dimensions to match video
+        canvasRef.current.width = videoRef.current.videoWidth;
+        canvasRef.current.height = videoRef.current.videoHeight;
+
+        // Draw the video frame to the canvas
+        context.drawImage(videoRef.current, 0, 0);
+
+        // Get the image data URL
+        const imageSrc = canvasRef.current.toDataURL("image/png");
+
+        // Pass the image data URL to the onCapture prop
+        onCapture(imageSrc);
       }
     }
   };
@@ -50,12 +43,14 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture }) => {
   return (
     <div>
       <video ref={videoRef} autoPlay playsInline style={{ width: "100%" }} />
+      <canvas ref={canvasRef} style={{ display: "none" }} /> {/* Hidden canvas */}
       <button onClick={handleCapture}>Capture</button>
     </div>
   );
 };
 
 export default WebcamCapture;
+
 
 // import React, { useRef, useEffect } from 'react';
 // import { loadFaceApiModels, detectFace } from '../utils/faceApi';
