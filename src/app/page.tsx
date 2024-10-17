@@ -1,53 +1,35 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import * as faceapi from "face-api.js";
-import WebcamCapture from "../components/webcamCapture";
+'use client'
+import WebcamCapture from "@/components/webcamCapture";
+import React, { useState } from "react";
 
-const Home: React.FC = () => {
-  const [modelLoaded, setModelLoaded] = useState<boolean>(false);
+const FaceAuthComponent = () => {
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    const loadModels = async () => {
-      const MODEL_URL = "/models"; // Path to your models
-      await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-      ]);
-      setModelLoaded(true);
-    };
+  const handleCapture = async (image: string) => {
+    const response = await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, faceFeatures: image, action: "signin" }), // Change action as needed
+    });
 
-    loadModels();
-  }, []);
-
-  const handleCapture = async (imageSrc: string) => {
-    const imgElement = new Image();
-    imgElement.src = imageSrc;
-
-    imgElement.onload = async () => {
-      const detections = await faceapi
-        .detectSingleFace(imgElement, new faceapi.TinyFaceDetectorOptions())
-        .withFaceLandmarks()
-        .withFaceDescriptor();
-
-      if (detections) {
-        console.log(detections);
-        // Implement authentication logic by comparing descriptors
-      } else {
-        console.log("No face detected");
-      }
-    };
+    const data = await response.json();
+    setMessage(data.message);
   };
+
   return (
     <div>
       <h1>Face Authentication</h1>
-      {modelLoaded ? (
-        <WebcamCapture onCapture={handleCapture} />
-      ) : (
-        <p>Loading models...</p>
-      )}
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Enter your email"
+      />
+      <WebcamCapture onCapture={handleCapture} />
+      {message && <p>{message}</p>}
     </div>
   );
 };
 
-export default Home;
+export default FaceAuthComponent;

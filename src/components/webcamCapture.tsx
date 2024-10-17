@@ -36,7 +36,7 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture }) => {
 
         // Pass the image data URL to the onCapture prop
         onCapture(imageSrc);
-      }
+      } 
     }
   };
 
