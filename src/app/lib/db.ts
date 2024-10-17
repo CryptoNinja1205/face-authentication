@@ -22,7 +22,8 @@ export const db = {
 // Function to define the user model schema
 function userModel() {
   const schema = new Schema({
-    faceData: { type: String, required: true },
+    email: {type: String, require: true},
+    faceFeatures: { type: String, required: true },
   })
 
   // // Define a partial index for the avatar field
